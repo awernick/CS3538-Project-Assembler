@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -24,23 +26,28 @@ int hex2int(char *hex) {
 }
 
 // int to binary. Output is not padded.
-char *int2bin(int val) {
-  int i, word_size, num_bits;
+char *int2bin(int val, int pad) {
+  int i, j, offset, word_size, bin_size, size;
   char *buff;
+
   word_size = sizeof(int) * 8;
-  num_bits = word_size  -  __builtin_clz(val);
-  buff = (char *) malloc(num_bits + 1);
-  buff[num_bits] = '\0';
-  for (i = num_bits - 1; i >= 0; i--) {
+  bin_size = word_size  -  __builtin_clz(val);
+  offset = pad - bin_size;
+  size = bin_size + offset;
+
+  buff = (char *) malloc(size + 1);
+  buff[size] = '\0';
+
+  for (i = size - 1; i >= 0; i--) {
     buff[i] = (val & 1) + '0';
     val >>= 1;
   }
-  return buff; 
-}
 
-char *hex2bin(char *hex) {
-  int val = hex2int(hex);
-  return int2bin(val);
+  for (j = 0; j < offset; j++) {
+    buff[j] = '0';
+  }
+
+  return buff; 
 }
 
 char **tokenizer(char *buff, int size, int *tcount) {
@@ -49,6 +56,7 @@ char **tokenizer(char *buff, int size, int *tcount) {
 
   s = (char *) malloc(size);
   strncpy(s, buff, size);
+  strtok(s, "\n");
   tokens = (char **) malloc(sizeof(char *));
 
   token = strtok(s, delim);
@@ -58,6 +66,13 @@ char **tokenizer(char *buff, int size, int *tcount) {
     token = strtok(NULL, delim);
   }
 
-  free(s);
+	if(*tcount == 0) {
+    return NULL;
+	}
+
   return tokens;
+}
+
+void printerr(const char msg[]) {
+  fprintf(stderr, "%s", msg);
 }

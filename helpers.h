@@ -10,5 +10,4 @@ char *ref2bin(char *ref);
 bool is_register(char *param);
 bool is_immediate(char *param);
 bool is_reference(char *param);
-
 #endif

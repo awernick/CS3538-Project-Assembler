@@ -1,7 +1,7 @@
 #ifndef __ASSEMBLER__
 #define __ASSEMBLER__
 
-char *assemble(char **tokens, int count);
+char *assemble(char *instr, char **params, int pcount);
 char **parse_params(char **params, int pcount);
 
 int parse_OR(char **params, int pcount);

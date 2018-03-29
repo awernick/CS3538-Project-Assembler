@@ -1,5 +1,6 @@
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include "utils.h"
 #include "helpers.h"
@@ -12,12 +13,16 @@ char *reg2bin(char *reg) {
     bin = int2bin(reg_num, 2);
     strncat(buf, bin, 2);
   }
+	// Pad if 8bit register
+	if(len == 2) {
+    strncat(buf, "00", 2);
+	}
   return buf;
 }
 
 char *imm2bin(char *imm) {
   int val = hex2int(&imm[1]);
-  return int2bin(val, 2);
+  return int2bin(val, 8);
 }
 
 // TODO: Calculate offsets
@@ -25,7 +30,7 @@ char *ref2bin(char *ref) {
   int len = strlen(ref) - 2;
   char *hex = (char *) malloc(len);
   strncpy(hex, ++ref, len);
-  return abs2bin(hex);
+  return imm2bin(hex);
 }
 
 bool is_register(char *param) {
@@ -73,4 +78,3 @@ bool is_reference(char *param) {
   }
   return false;
 }
-

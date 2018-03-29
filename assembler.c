@@ -17,7 +17,8 @@ int main(int argc, char *argv[]) {
   size_t lsize = 0;
 
   if (argc < 3) {
-    perror("Incorrect usage. Exiting...\n");
+    printerr("Incorrect usage. Exiting...\n");
+    return 1;
   }
 
   if ((rfile = fopen(argv[1], "r")) ==  NULL) {
@@ -32,8 +33,20 @@ int main(int argc, char *argv[]) {
 
   while (getline(&buff, &lsize, rfile) > 0) {
     tokens = tokenizer(buff, strlen(buff), &tcount);
-    instr_line = assemble(tokens, tcount);
+    if(tcount < 1) { 
+      printerr("Incorrect input: "); 
+      printerr(buff); 
+      printerr(". Exiting..."); 
+      return 1;
+    }
+    if((instr_line = assemble(tokens[0], &tokens[1], tcount -1)) == NULL) {
+      printerr("Incorrect instruction. Skipping\n"); 
+      continue;
+    }
+    printf("%s\n", instr_line);
     fprintf(wfile, "%s\n", instr_line);
+    free(tokens[0]);
+    free(tokens);
     free(buff);
   }
 
@@ -82,12 +95,31 @@ char *assemble(char *instr, char **params, int pcount) {
     opcode = parse_CJMP(instr, params, pcount);
   }
 
+#ifdef DEBUG
+  printf("=================================================\n");
+  printf("Instr: %s, Opcode: %d\n", instr, opcode); 
+  printf("Param: %s, Register: %d, Immediate: %d, Reference: %d\n", params[0],
+      is_register(params[0]), is_immediate(params[0]), is_reference(params[0]));
+
+  printf("Param: %s, Register: %d, Immediate: %d, Reference: %d\n", params[1],
+      is_register(params[1]), is_immediate(params[1]), is_reference(params[1]));
+  printf("==================================================\n");
+#endif
+
+
   if(opcode == -1) {
     return NULL;
   }
 
   bin_params = parse_params(params, pcount);
-  bin_opcode = int2bin(opcode);
+  bin_opcode = int2bin(opcode, OPCODE_SIZE);
+
+#ifdef DEBUG
+  printf("=================================================\n");
+  printf("Params: %s %s\n", bin_params[0], bin_params[1]);
+  printf("Opcode: %s\n", bin_opcode);
+  printf("==================================================\n");
+#endif
 
   buf_size = strlen(bin_opcode);
   for(i = 0; i < pcount; i++) {
