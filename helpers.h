@@ -4,11 +4,11 @@
 #include <stdbool.h>
 
 char *reg2bin(char *reg);
-char *abs2bin(char *abs);
-char *rel2bin(char *rel);
+char *imm2bin(char *imm);
+char *ref2bin(char *ref);
 
 bool is_register(char *param);
-bool is_absolute(char *param);
-bool is_relative(char *param);
+bool is_immediate(char *param);
+bool is_reference(char *param);
 
 #endif

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "utils.h"
 #include "helpers.h"
 
@@ -14,16 +15,16 @@ char *reg2bin(char *reg) {
   return buf;
 }
 
-char *abs2bin(char *abs) {
-  int val = hex2int(&abs[1]);
+char *imm2bin(char *imm) {
+  int val = hex2int(&imm[1]);
   return int2bin(val, 2);
 }
 
 // TODO: Calculate offsets
-char *rel2bin(char *rel) {
-  int len = strlen(rel) - 2;
+char *ref2bin(char *ref) {
+  int len = strlen(ref) - 2;
   char *hex = (char *) malloc(len);
-  strncpy(hex, ++rel, len);
+  strncpy(hex, ++ref, len);
   return abs2bin(hex);
 }
 
@@ -39,8 +40,7 @@ bool is_register(char *param) {
   return false;
 }
 
-
-bool is_absolute(char *param) {
+bool is_immediate(char *param) {
   int i, len = strlen(param);
   if (param[0] == '$') {
     for(i = 1; i < len; i++) {
@@ -56,7 +56,7 @@ bool is_absolute(char *param) {
   return false;
 }
 
-bool is_relative(char *param) {
+bool is_reference(char *param) {
   int i, len = strlen(param);
   if (param[0] == '[') {
     for (i = 1; i < len - 1; i++) {

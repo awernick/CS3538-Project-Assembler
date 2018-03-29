@@ -8,6 +8,7 @@
 #include "assembler.h"
 #include "helpers.h"
 #include "utils.h"
+#include "sizes.h"
 
 int main(int argc, char *argv[]) {
   char **tokens, *instr_line, *buff = NULL;
@@ -43,62 +44,291 @@ int main(int argc, char *argv[]) {
 }
 
 
-char *assemble(char **tokens, int count) {
-  char *line = (char *) malloc(INSTR_SIZE);
-  char *params = parse_params(tokens, count);
+char *assemble(char *instr, char **params, int pcount) {
+  int opcode, buf_size, i;
+  char *buf, *bin_opcode, **bin_params;
 
-  if (strcmp(tokens[0], OR_INSTR) == 0) {
-    return parse_OR(line, tokens, count);
+  if (strcmp(instr, OR_INSTR) == 0) {
+    opcode = parse_OR(params, pcount);
   } 
-  else if (strcmp(tokens[0], AND_INSTR) == 0) {
-    return parse_AND(line, tokens, count);
+  else if (strcmp(instr, AND_INSTR) == 0) {
+    opcode = parse_AND(params, pcount);
   }
-  else if (strcmp(tokens[0], CMP_INSTR) == 0) {
-    return parse_CMP(line, tokens, count);
+  else if (strcmp(instr, CMP_INSTR) == 0) {
+    opcode = parse_CMP( params, pcount);
   }
-  else if (strcmp(tokens[0], MOV_INSTR) == 0) {
-    return assemble_MOV(line, tokens, count);
+  else if (strcmp(instr, JMP_INSTR) == 0) {
+    opcode = parse_JMP( params, pcount);
   }
-  else if (strcmp(tokens[0], NOT_INSTR) == 0) {
-    return assemble_NOT(line, tokens, count);
+  else if (strcmp(instr, MOV_INSTR) == 0) {
+    opcode = parse_MOV(params, pcount);
   }
-  else if (strcmp(tokens[0], XOR_INSTR) == 0) {
-    return assemble_XOR(line, tokens, count);
+  else if (strcmp(instr, NOT_INSTR) == 0) {
+    opcode = parse_NOT(params, pcount);
   }
-  else if (strcmp(tokens[0], ADDC_INSTR) == 0) {
-    return assemble_ADDC(line, tokens, count);
+  else if (strcmp(instr, XOR_INSTR) == 0) {
+    opcode = parse_XOR(params, pcount);
   }
-  else if (strcmp(tokens[0], SUBB_INSTR) == 0) {
-    return assemble_SUBB(line, tokens, count);
+  else if (strcmp(instr, ADDC_INSTR) == 0) {
+    opcode = parse_ADDC(params, pcount);
+  }
+  else if (strcmp(instr, SUBB_INSTR) == 0) {
+    opcode = parse_SUBB(params, pcount);
+  }
+  else if (strcmp(instr, NOP_INSTR) == 0) {
+    opcode = NOP_OPCODE;
   }
   else {
+    opcode = parse_CJMP(instr, params, pcount);
+  }
+
+  if(opcode == -1) {
     return NULL;
   }
+
+  bin_params = parse_params(params, pcount);
+  bin_opcode = int2bin(opcode);
+
+  buf_size = strlen(bin_opcode);
+  for(i = 0; i < pcount; i++) {
+    buf_size += strlen(bin_params[i]);
+  }
+  buf_size++;
+
+  buf = (char *) malloc(buf_size);
+  strcpy(buf, bin_opcode);
+  for(i = 0; i < pcount; i++) {
+    strcat(buf, bin_params[i]);
+  }
+  buf[buf_size -1] = '\0';
+  return buf;
 }
 
-char *parse_params(char **tokens, int count) {
+char **parse_params(char **tok_params, int count) {
   int i;
-  for(i = 1; i < count; i++) {
-    if(is_register(tokens[i])) {
-      reg2bin(tokens[i]);
+  char **bin_params = (char **) malloc(sizeof(char *) * count);
+
+  for(i = 0; i < count; i++) {
+    if(is_register(tok_params[i])) {
+      bin_params[i] = reg2bin(tok_params[i]);
     }
-    else if(is_absolute(tokens[i])) {
-      abs2bin(tokens[i]);
+    else if(is_immediate(tok_params[i])) {
+      bin_params[i] = imm2bin(tok_params[i]);
     }
-    else if(is_relative(tokens[i])) {
-      rel2bin(tokens[i]);
+    else if(is_reference(tok_params[i])) {
+      bin_params[i] = ref2bin(tok_params[i]);
     }
     else {
       return NULL;
     }
   }
+
+  return bin_params;
 }
 
+int parse_OR(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return OR_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return OR_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return OR_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return OR_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
 
-char *assemble_OR(char *line, char **tokens, int count) {
-  int i;
-  char dst; 
-  for (i = 0; i < count; i++) {
-    tokens[1];
+int parse_AND(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return AND_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return AND_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return AND_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return AND_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_CMP(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return CMP_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return CMP_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return CMP_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return CMP_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_JMP(char **params, int pcount) {
+  if(pcount != 1) {
+    return -1;
+  }
+  if(is_register(params[0])) {
+    return JMP_OPCODES[0];
+  }
+  else if(is_immediate(params[0])) {
+    return JMP_OPCODES[1];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_MOV(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return MOV_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return MOV_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return MOV_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return MOV_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_NOT(char **params, int pcount) {
+  if(pcount != 1) {
+    return -1;
+  }
+  if(is_register(params[0])) {
+    return NOT_OPCODES[0];
+  }
+  else if(is_reference(params[0])) {
+    return NOT_OPCODES[1];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_XOR(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return XOR_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return XOR_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return XOR_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return XOR_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_ADDC(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return ADDC_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return ADDC_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return ADDC_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return ADDC_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_SUBB(char **params, int pcount) {
+  if(pcount != 2) {
+    return -1;
+  }
+  if(is_register(params[0]) && is_register(params[1])) {
+    return SUBB_OPCODES[0];
+  }
+  else if(is_register(params[0]) && is_immediate(params[1])) {
+    return SUBB_OPCODES[1];
+  }
+  else if(is_register(params[0]) && is_reference(params[1])) {
+    return SUBB_OPCODES[2];
+  }
+  else if(is_reference(params[0]) && is_register(params[1])) {
+    return SUBB_OPCODES[3];
+  }
+  else {
+    return -1;
+  }
+}
+
+int parse_CJMP(char *instr, char **params, int pcount) {
+  if(pcount != 1) {
+    return -1;
+  }
+  else if(!is_immediate(params[0])) {
+    return -1;
+  }
+  if (strcmp(instr, JLO_INSTR) == 0) {
+    return JLO_OPCODE;
+  } 
+  else if (strcmp(instr, JHS_INSTR) == 0) {
+    return JHS_OPCODE;
+  }
+  else if (strcmp(instr, JEQ_INSTR) == 0) {
+    return JEQ_OPCODE;
+  }
+  else if (strcmp(instr, JNE_INSTR) == 0) {
+    return JNE_OPCODE;
+  }
+  else if (strcmp(instr, JMI_INSTR) == 0) {
+    return JMI_OPCODE;
+  }
+  else if (strcmp(instr, JPL_INSTR) == 0) {
+    return JPL_OPCODE;
+  }
+  else {
+    return -1;
   }
 }
