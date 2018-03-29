@@ -13,10 +13,10 @@ char *reg2bin(char *reg) {
     bin = int2bin(reg_num, 2);
     strncat(buf, bin, 2);
   }
-	// Pad if 8bit register
-	if(len == 2) {
+  // Pad if 8bit register
+  if(len == 2) {
     strncat(buf, "00", 2);
-	}
+  }
   return buf;
 }
 
