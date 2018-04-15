@@ -2,7 +2,7 @@
 #define __ASSEMBLER__
 
 char *assemble(char *instr, char **params, int pcount);
-char **parse_params(char **params, int pcount);
+int parse_param(char *params);
 
 int parse_OR(char **params, int pcount);
 int parse_AND(char **params, int pcount);

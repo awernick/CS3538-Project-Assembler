@@ -37,29 +37,30 @@ int main(int argc, char *argv[]) {
       printerr("Incorrect input: "); 
       printerr(buff); 
       printerr(". Exiting..."); 
+      free(buff);
       return 1;
     }
-    if((instr_line = assemble(tokens[0], &tokens[1], tcount -1)) == NULL) {
+    if((instr_line = assemble(tokens[0], &tokens[1], tcount - 1)) == NULL) {
       printerr("Incorrect instruction. Skipping\n"); 
       continue;
     }
     printf("%s\n", instr_line);
     fprintf(wfile, "%s\n", instr_line);
+    free(instr_line);
     free(tokens[0]);
     free(tokens);
-    free(buff);
   }
 
+  free(buff);
   fclose(wfile);
   fclose(rfile);
-  free(buff);
   return 0;
 }
 
 
 char *assemble(char *instr, char **params, int pcount) {
-  int opcode, buf_size, i;
-  char *buf, *bin_opcode, **bin_params;
+  int opcode, param0, param1, buf_size, i;
+  char *buf = (char *) malloc(256);
 
   if (strcmp(instr, OR_INSTR) == 0) {
     opcode = parse_OR(params, pcount);
@@ -97,65 +98,94 @@ char *assemble(char *instr, char **params, int pcount) {
 
 #ifdef DEBUG
   printf("=================================================\n");
-  printf("Instr: %s, Opcode: %d\n", instr, opcode); 
-  printf("Param: %s, Register: %d, Immediate: %d, Reference: %d\n", params[0],
-      is_register(params[0]), is_immediate(params[0]), is_reference(params[0]));
+  printf("Instr: %s, Opcode: %02x\n", instr, opcode); 
+  printf("%d\n", pcount);
+  if(pcount > 0) {
+    printf("Param: %s, Register: %d, Immediate: %d, Reference: %d\n", params[0],
+        is_register(params[0]), is_immediate(params[0]), is_reference(params[0]));
+  }
 
-  printf("Param: %s, Register: %d, Immediate: %d, Reference: %d\n", params[1],
-      is_register(params[1]), is_immediate(params[1]), is_reference(params[1]));
+  if(pcount > 1) {
+    printf("Param: %s, Register: %d, Immediate: %d, Reference: %d\n", params[1],
+        is_register(params[1]), is_immediate(params[1]), is_reference(params[1]));
+  }
   printf("==================================================\n");
 #endif
-
 
   if(opcode == -1) {
     return NULL;
   }
 
-  bin_params = parse_params(params, pcount);
-  bin_opcode = int2bin(opcode, OPCODE_SIZE);
+  if(pcount > 0) {
+    param0 = parse_param(params[0]);
+    param1 = parse_param(params[1]);
 
 #ifdef DEBUG
-  printf("=================================================\n");
-  printf("Params: %s %s\n", bin_params[0], bin_params[1]);
-  printf("Opcode: %s\n", bin_opcode);
-  printf("==================================================\n");
+    printf("=================================================\n");
+    printf("Params: %02x %02x\n", param0, param1);
+    printf("Opcode: %x\n", opcode);
+    printf("==================================================\n");
 #endif
 
-  buf_size = strlen(bin_opcode);
-  for(i = 0; i < pcount; i++) {
-    buf_size += strlen(bin_params[i]);
+    if(is_register(params[0])) {
+      param0 = param0 << 4;
+    }
   }
-  buf_size++;
 
-  buf = (char *) malloc(buf_size);
-  strcpy(buf, bin_opcode);
-  for(i = 0; i < pcount; i++) {
-    strcat(buf, bin_params[i]);
+  if(pcount == 0) {
+    sprintf(buf, "%02X", opcode);
   }
-  buf[buf_size -1] = '\0';
+  // 2 byte instruction e.g MOV R2 R1
+  else if(is_register(params[0]) && is_register(params[1])) {
+    param0 |= param1;
+    sprintf(buf, "%02X %02X", opcode, param0);
+  } 
+  // 4 byte instructions e.g MOV [$0000] R2
+  else if(is_reference(params[0])) {
+    int msn = (param0 & 0xFF00) >> 8;
+    int lsn = param0 & 0xFF;
+    sprintf(buf, "%02X %02X %02X %02X", 
+      opcode, msn, lsn, param1);
+  }
+  // 4 byte instructions e.g MOV R2 [$4000]
+  else if(is_reference(params[1])) {
+    int msn = (param1 & 0xFF00) >> 8;
+    int lsn = param1 & 0xFF ;
+    sprintf(buf, "%02X %02X %02X %02X", 
+      opcode, param0, msn, lsn);
+  }
+  else if(is_immediate(params[0])) {
+    int msn = (param0 & 0xFF00) >> 8;
+    int lsn = param0 & 0xFF ;
+    sprintf(buf, "%02X %02X %02X", opcode, msn, lsn);
+  }
+  // 3 byte instructions
+  else {
+    if(pcount == 1) {
+      sprintf(buf, "%02X %02X", opcode, param0);
+    } else {
+      sprintf(buf, "%02X %02X %02X", opcode, param0, param1);
+    }
+  }
+
   return buf;
 }
 
-char **parse_params(char **tok_params, int count) {
+int parse_param(char *tok_param) {
   int i;
-  char **bin_params = (char **) malloc(sizeof(char *) * count);
 
-  for(i = 0; i < count; i++) {
-    if(is_register(tok_params[i])) {
-      bin_params[i] = reg2bin(tok_params[i]);
-    }
-    else if(is_immediate(tok_params[i])) {
-      bin_params[i] = imm2bin(tok_params[i]);
-    }
-    else if(is_reference(tok_params[i])) {
-      bin_params[i] = ref2bin(tok_params[i]);
-    }
-    else {
-      return NULL;
-    }
+  if(is_register(tok_param)) {
+    return reg2int(tok_param);
   }
-
-  return bin_params;
+  else if(is_immediate(tok_param)) {
+    return imm2int(tok_param);
+  }
+  else if(is_reference(tok_param)) {
+    return ref2int(tok_param);
+  }
+  else {
+    return 0;
+  }
 }
 
 int parse_OR(char **params, int pcount) {
@@ -172,7 +202,7 @@ int parse_OR(char **params, int pcount) {
     return OR_OPCODES[2];
   }
   else if(is_reference(params[0]) && is_register(params[1])) {
-    return OR_OPCODES[3];
+    return OR_OPCODES[4];
   }
   else {
     return -1;
