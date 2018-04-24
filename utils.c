@@ -80,3 +80,17 @@ void printerr(const char msg[]) {
 void print_usage() {
   printerr("Usage: ./assembler input output\n");
 }
+
+void sanitize(char *str) {
+   int c = 0;
+ 
+   while (str[c] != '\0') {
+      if (str[c] >= 'a' && str[c] <= 'z') {
+         str[c] = str[c] - 32;
+      }
+      if(str[c] == ',') {
+        str[c] = ' ';
+      }
+      c++;
+   }
+}

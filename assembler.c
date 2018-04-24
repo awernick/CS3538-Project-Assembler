@@ -33,6 +33,10 @@ int main(int argc, char *argv[]) {
   }
 
   while (getline(&buff, &lsize, rfile) > 0) {
+    sanitize(buff);
+    #if DEBUG
+    printf("%s\n", buff);
+    #endif
     tokens = tokenizer(buff, strlen(buff), &tcount);
     if(tcount < 1) { 
       printerr("Incorrect input: "); 

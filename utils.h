@@ -8,5 +8,6 @@ char **tokenizer(char *buff, int lsize, int *tcount);
 
 void printerr(const char *str);
 void print_usage();
+void sanitize(char *str);
 
 #endif
