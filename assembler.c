@@ -142,7 +142,7 @@ char *assemble(char *instr, char **params, int pcount) {
     sprintf(buf, "%02X", opcode);
   }
   // 2 byte instruction e.g MOV R2 R1
-  else if(is_register(params[0]) && is_register(params[1])) {
+  else if((pcount > 1) && (is_register(params[0]) && is_register(params[1]))) {
     param0 |= param1;
     sprintf(buf, "%02X %02X", opcode, param0);
   } 
