@@ -123,7 +123,8 @@ char *assemble(char *instr, char **params, int pcount) {
 
   if(pcount > 0) {
     param0 = parse_param(params[0]);
-    param1 = parse_param(params[1]);
+    if(pcount > 1)
+      param1 = parse_param(params[1]);
 
 #ifdef DEBUG
     printf("=================================================\n");
@@ -153,7 +154,7 @@ char *assemble(char *instr, char **params, int pcount) {
       opcode, msn, lsn, param1);
   }
   // 4 byte instructions e.g MOV R2 [$4000]
-  else if(is_reference(params[1])) {
+  else if(pcount > 1 && is_reference(params[1])) {
     int msn = (param1 & 0xFF00) >> 8;
     int lsn = param1 & 0xFF ;
     sprintf(buf, "%02X %02X %02X %02X", 

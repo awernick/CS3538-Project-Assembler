@@ -36,7 +36,7 @@ int reg2int(char *reg) {
   int i, reg_num, len = strlen(reg);
   for(i = 1; i < len; i++) {
     reg_num = reg[i] - '0';
-    reg_num = reg_num << (2 * (len - i)) ;
+    reg_num = reg_num << (2 * (len - i));
   }
   return reg_num;
 }
