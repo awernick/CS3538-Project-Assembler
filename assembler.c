@@ -208,7 +208,7 @@ int parse_OR(char **params, int pcount) {
     return OR_OPCODES[2];
   }
   else if(is_reference(params[0]) && is_register(params[1])) {
-    return OR_OPCODES[4];
+    return OR_OPCODES[3];
   }
   else {
     return -1;
