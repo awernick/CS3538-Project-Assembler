@@ -33,11 +33,14 @@ char *ref2bin(char *ref) {
 }
 
 int reg2int(char *reg) {
-  int i, reg_num, len = strlen(reg);
+  int i, reg_num = 0, len = strlen(reg);
   for(i = 1; i < len; i++) {
-    reg_num = reg[i] - '0';
-    reg_num = reg_num << (2 * (len - i));
+    reg_num += reg[i] - '0';
+    if(i != 2) {
+      reg_num = reg_num << 2;
+    }
   }
+  printf("REG2INT - len: %d, Reg: %s, num: %d\n", len, reg, reg_num);
   return reg_num;
 }
 

@@ -134,7 +134,8 @@ char *assemble(char *instr, char **params, int pcount) {
 #endif
 
     if(is_register(params[0])) {
-      param0 = param0 << 4;
+      if(strlen(params[0]) != 3)
+        param0 = param0 << 4;
     }
   }
 
