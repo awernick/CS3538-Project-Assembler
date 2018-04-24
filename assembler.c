@@ -17,7 +17,8 @@ int main(int argc, char *argv[]) {
   size_t lsize = 0;
 
   if (argc < 3) {
-    printerr("Incorrect usage. Exiting...\n");
+    printerr("Incorrect number of params.\n");
+    print_usage();
     return 1;
   }
 

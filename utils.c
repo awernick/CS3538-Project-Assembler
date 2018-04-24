@@ -76,3 +76,7 @@ char **tokenizer(char *buff, int size, int *tcount) {
 void printerr(const char msg[]) {
   fprintf(stderr, "%s", msg);
 }
+
+void print_usage() {
+  printerr("Usage: ./assembler input output\n");
+}

@@ -7,5 +7,6 @@ char *int2bin(int val, int pad);
 char **tokenizer(char *buff, int lsize, int *tcount);
 
 void printerr(const char *str);
+void print_usage();
 
 #endif
